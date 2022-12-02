@@ -4,17 +4,25 @@ import * as path from "std/path/mod.ts";
 
 const scriptURL = new URL(import.meta.url);
 const scriptURLString = scriptURL.toString();
-const isFileURL = scriptURL.toString().startsWith("file://");
+const sourceURLIsFileUrl = scriptURL.toString().startsWith("file://");
 
 function joinPath(source: string | URL, fileName: string): string | URL {
+  let result: string | URL;
+
   if (typeof source === "string") {
-    return path.join(source, fileName);
+    result = path.join(source, fileName);
   } else {
-    return new URL(fileName, source);
+    result = new URL(fileName, source);
   }
+
+  if (typeof result === "string" && sourceURLIsFileUrl) {
+    result = new URL(`file://${result}`);
+  }
+
+  return result;
 }
 
-const source = isFileURL
+const source = sourceURLIsFileUrl
   ? path.dirname(path.fromFileUrl(scriptURL))
   : new URL(
       scriptURLString.substring(0, scriptURLString.length - "init.ts".length)
@@ -40,7 +48,7 @@ for (const directory of DIRECTORIES_TO_CREATE) {
 
 for (const file of FILES_TO_COPY) {
   try {
-    await fs.copy(joinPath(source, file), path.join(destination, file), {
+    await fs.copy(joinPath(source, file), joinPath(destination, file), {
       overwrite: false,
     });
     console.info(colors.green(`Wrote ${path.join(destination, file)}.`));
