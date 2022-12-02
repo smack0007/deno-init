@@ -6,9 +6,19 @@ const scriptURL = new URL(import.meta.url);
 const scriptURLString = scriptURL.toString();
 const isFileURL = scriptURL.toString().startsWith("file://");
 
+function joinPath(source: string | URL, fileName: string): string | URL {
+  if (typeof source === "string") {
+    return path.join(source, fileName);
+  } else {
+    return new URL(fileName, source);
+  }
+}
+
 const source = isFileURL
   ? path.dirname(path.fromFileUrl(scriptURL))
-  : scriptURLString.substring(0, scriptURLString.length - "init.ts".length);
+  : new URL(
+      scriptURLString.substring(0, scriptURLString.length - "init.ts".length)
+    );
 const destination = path.resolve(Deno.args[0] ?? ".");
 
 const projectName = destination.split(path.SEP).at(-1) as string;
@@ -30,7 +40,7 @@ for (const directory of DIRECTORIES_TO_CREATE) {
 
 for (const file of FILES_TO_COPY) {
   try {
-    await fs.copy(path.join(source, file), path.join(destination, file), {
+    await fs.copy(joinPath(source, file), path.join(destination, file), {
       overwrite: false,
     });
     console.info(colors.green(`Wrote ${path.join(destination, file)}.`));
