@@ -15,7 +15,7 @@ function joinPath(source: string | URL, fileName: string): string | URL {
     result = new URL(fileName, source);
   }
 
-  if (typeof result === "string" && sourceURLIsFileUrl) {
+  if (typeof result === "string" && !sourceURLIsFileUrl) {
     result = new URL(`file://${result}`);
   }
 
